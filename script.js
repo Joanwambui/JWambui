@@ -6,9 +6,6 @@ const tabs = Array.from(document.querySelectorAll(".tab"));
 const sections = Array.from(document.querySelectorAll(".tab-content"));
 const content = document.querySelector(".content");
 
-function getScrollContainer() {
-  return window.innerWidth <= 768 ? window : content;
-}
 // your scroll container
 const tabsBar = document.querySelector(".tabs"); // sticky nav
 
@@ -17,6 +14,18 @@ if (!content || !tabsBar || tabs.length === 0 || sections.length === 0) {
 }
 
 // ---------- helpers ----------
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
+function getScrollContainer() {
+  return isMobile() ? window : content;
+}
+
+function getScrollTop() {
+  return isMobile() ? window.scrollY : content.scrollTop;
+}
+
 function getTabsHeight() {
   // height of the sticky nav (accounts for padding/blur background)
   return tabsBar ? Math.ceil(tabsBar.getBoundingClientRect().height) : 0;
@@ -29,7 +38,7 @@ function activateTab(id) {
 }
 
 function getSectionTop(sectionEl) {
-  if (window.innerWidth <= 768) {
+  if (isMobile()) {
     return sectionEl.getBoundingClientRect().top + window.scrollY;
   }
 
@@ -53,10 +62,13 @@ tabs.forEach((tab) => {
     const offset = getTabsHeight() + 16;
     const targetTop = getSectionTop(target) - offset;
     const scroller = getScrollContainer();
+
+    isProgrammaticScroll = true;
+
     if (scroller === window) {
       window.scrollTo({ top: targetTop, behavior: "smooth" });
     } else {
-      scroller.scrollTo({ top: targetTop, behavior: "smooth" }); // 16px breathing room under sticky tabs
+      scroller.scrollTo({ top: targetTop, behavior: "smooth" });
     }
 
     // release lock after scrolling settles
@@ -71,37 +83,46 @@ tabs.forEach((tab) => {
 let ticking = false;
 
 function updateActiveTabOnScroll() {
-  const offset = getTabsHeight() + 20; // where "reading line" starts under sticky tabs
-  const scrollPos = content.scrollTop + offset;
+  const offset = getTabsHeight() + 20;
+  const scrollPos = getScrollTop() + offset;
 
-  // Find the last section whose top is above the reading line
   let current = sections[0]?.id;
 
   for (const section of sections) {
-    const top = getSectionTopInContent(section);
-    if (top <= scrollPos) current = section.id;
-    else break; // sections are in order; stop early
+    const sectionTop = getSectionTop(section);
+    if (sectionTop <= scrollPos) {
+      current = section.id;
+    } else {
+      break;
+    }
   }
 
   if (current) activateTab(current);
 }
 
-getScrollContainer().addEventListener("scroll", () => {
-  // even during smooth scroll, we still want it to update correctly,
-  // but if you prefer, you can skip updates while programmatic scrolling:
-  // if (isProgrammaticScroll) return;
+function onScroll() {
+  if (isProgrammaticScroll) return;
 
   if (!ticking) {
-    window.requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
       updateActiveTabOnScroll();
       ticking = false;
     });
     ticking = true;
   }
-});
+}
+
+function attachScrollListener() {
+  const scroller = getScrollContainer();
+  scroller.addEventListener("scroll", onScroll);
+}
+
+attachScrollListener();
 
 // Run once on load
 updateActiveTabOnScroll();
 
 // If fonts/images shift layout after load, re-run
-window.addEventListener("resize", updateActiveTabOnScroll);
+window.addEventListener("resize", () => {
+  updateActiveTabOnScroll();
+});
