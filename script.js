@@ -4,7 +4,12 @@
 
 const tabs = Array.from(document.querySelectorAll(".tab"));
 const sections = Array.from(document.querySelectorAll(".tab-content"));
-const content = document.querySelector(".content"); // your scroll container
+const content = document.querySelector(".content");
+
+function getScrollContainer() {
+  return window.innerWidth <= 768 ? window : content;
+}
+// your scroll container
 const tabsBar = document.querySelector(".tabs"); // sticky nav
 
 if (!content || !tabsBar || tabs.length === 0 || sections.length === 0) {
@@ -23,8 +28,11 @@ function activateTab(id) {
   });
 }
 
-function getSectionTopInContent(sectionEl) {
-  // section top relative to the scroll container (.content)
+function getSectionTop(sectionEl) {
+  if (window.innerWidth <= 768) {
+    return sectionEl.getBoundingClientRect().top + window.scrollY;
+  }
+
   const contentRect = content.getBoundingClientRect();
   const sectionRect = sectionEl.getBoundingClientRect();
   return sectionRect.top - contentRect.top + content.scrollTop;
@@ -42,11 +50,14 @@ tabs.forEach((tab) => {
 
     activateTab(id);
 
-    const offset = getTabsHeight() + 16; // 16px breathing room under sticky tabs
-    const targetTop = getSectionTopInContent(target) - offset;
-
-    isProgrammaticScroll = true;
-    content.scrollTo({ top: targetTop, behavior: "smooth" });
+    const offset = getTabsHeight() + 16;
+    const targetTop = getSectionTop(target) - offset;
+    const scroller = getScrollContainer();
+    if (scroller === window) {
+      window.scrollTo({ top: targetTop, behavior: "smooth" });
+    } else {
+      scroller.scrollTo({ top: targetTop, behavior: "smooth" }); // 16px breathing room under sticky tabs
+    }
 
     // release lock after scrolling settles
     clearTimeout(scrollStopTimer);
@@ -75,7 +86,7 @@ function updateActiveTabOnScroll() {
   if (current) activateTab(current);
 }
 
-content.addEventListener("scroll", () => {
+getScrollContainer().addEventListener("scroll", () => {
   // even during smooth scroll, we still want it to update correctly,
   // but if you prefer, you can skip updates while programmatic scrolling:
   // if (isProgrammaticScroll) return;
