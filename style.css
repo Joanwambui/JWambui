@@ -633,3 +633,68 @@ body {
   object-fit: cover; /* 🔥 magic */
   object-position: center;
 }
+
+/* =========================
+   MOBILE LAYOUT FIX
+========================= */
+@media (max-width: 768px) {
+  /* 1. Stack everything vertically */
+  .layout {
+    flex-direction: column;
+    height: auto;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  /* 2. Sidebar becomes top card */
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+
+  .profile-card {
+    height: auto;
+    padding: 24px;
+  }
+
+  /* 3. Content becomes normal flow */
+  .content {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* 4. Tabs spacing tighter */
+  .tabs {
+    padding: 16px 20px 12px;
+    gap: 16px;
+  }
+
+  .tab {
+    font-size: 14px;
+  }
+
+  /* 5. Content padding reduced */
+  .content-inner {
+    padding: 20px;
+  }
+
+  /* 6. Typography scale */
+  .page-title {
+    font-size: 28px;
+  }
+
+  .body-text {
+    font-size: 16px;
+  }
+
+  /* 7. Projects stack cleanly */
+  .project-feature {
+    padding: 24px;
+    gap: 24px;
+  }
+
+  .project-feature-media {
+    max-width: 100%;
+    height: 200px;
+  }
+}
